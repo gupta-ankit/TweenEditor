@@ -69,15 +69,6 @@ public class Sketch extends PApplet {
         playBtn = gui.addButton("Play").setId(PLAY_BTN).setPosition(20, 20);
         gui.addButton("Stop").setId(STOP_BTN).setPosition(playBtn.getWidth() + 30, 20);
         PFont pfont = createFont("Arial", 20, true); // use true/false for smooth/no-smooth        
-        selectedLabel = gui.addLabel("selected").setPosition(50, height / 2 - 30)
-                .setHeight(30)
-                .setColor(color(0))
-                .setFont(pfont);
-        propertyDropdown = gui.addDropdownList("properties")
-                .setId(PROPERTIES_DROPDOWN)
-                .setPosition(selectedLabel.getPosition()[0] + selectedLabel.getWidth() + 5, height / 2 - 30)
-                .setBarHeight(20);
-        addChannelButton = gui.addButton("Add Channel").setId(ADD_CHNL_BTN).setPosition(propertyDropdown.getPosition()[0] + propertyDropdown.getWidth() + 5, height / 2 - 30);
 
         rotationSlider = setupSlider("rotation").setRange(-180, 180).setId(ROTATION_SLIDER);
         sliderR = setupSlider("red").setRange(0, 255).setId(SLIDER_R);
@@ -88,6 +79,17 @@ public class Sketch extends PApplet {
         sliderR.setVisible(false);
         sliderG.setVisible(false);
         sliderB.setVisible(false);
+
+        selectedLabel = gui.addLabel("selected").setPosition(50, rotationSlider.getPosition()[1] + rotationSlider.getHeight() + 20)
+                .setHeight(30)
+                .setColor(color(0))
+                .setFont(pfont);
+        propertyDropdown = gui.addDropdownList("properties")
+                .setId(PROPERTIES_DROPDOWN)
+                .setPosition(selectedLabel.getPosition()[0] + selectedLabel.getWidth() + 5, selectedLabel.getPosition()[1])
+                .setBarHeight(20);
+        addChannelButton = gui.addButton("Add Channel").setId(ADD_CHNL_BTN).setPosition(propertyDropdown.getPosition()[0] + propertyDropdown.getWidth() + 5,
+                selectedLabel.getPosition()[1]);
 
         s.addChannel(first, "rotation");
     }
@@ -122,28 +124,30 @@ public class Sketch extends PApplet {
 
             case PROPERTIES_DROPDOWN:
                 int selectedIndex = (int) propertyDropdown.getValue();
-                if (selectedIndex < propertyDropdown.getItems().size()) {
-                    Map<String, Object> item = propertyDropdown.getItem(selectedIndex);
-                    String stringValue = (String) item.get("name");
+                Map<String, Object> item = propertyDropdown.getItem(selectedIndex);
+                String stringValue = (String) item.get("name");
 
-                    rotationSlider.setVisible(false);
-                    sliderR.setVisible(false);
-                    sliderG.setVisible(false);
-                    sliderB.setVisible(false);
-                    switch (stringValue) {
-                        case "rotation":
-                            rotationSlider.setVisible(true);
-                            break;
-                        case "red":
-                            sliderR.setVisible(true);
-                            break;
-                        case "green":
-                            sliderG.setVisible(true);
-                            break;
-                        case "blue":
-                            sliderB.setVisible(true);
-                            break;
-                    }
+                rotationSlider.setVisible(false);
+                sliderR.setVisible(false);
+                sliderG.setVisible(false);
+                sliderB.setVisible(false);
+                switch (stringValue) {
+                    case "rotation":
+                        rotationSlider.setVisible(true);
+                        rotationSlider.setValue(selected.getParameter("rotation"));
+                        break;
+                    case "red":
+                        sliderR.setVisible(true);
+                        sliderR.setValue(selected.getParameter("red"));
+                        break;
+                    case "green":
+                        sliderG.setVisible(true);
+                        sliderG.setValue(selected.getParameter("green"));
+                        break;
+                    case "blue":
+                        sliderB.setVisible(true);
+                        sliderB.setValue(selected.getParameter("blue"));
+                        break;
                 }
 
                 break;
@@ -151,6 +155,24 @@ public class Sketch extends PApplet {
             case ROTATION_SLIDER:
                 if (selected != null) {
                     selected.setParameter("rotation", radians(rotationSlider.getValue()));
+                }
+                break;
+
+            case SLIDER_R:
+                if (selected != null) {
+                    selected.setParameter("red", sliderR.getValue());
+                }
+                break;
+
+            case SLIDER_G:
+                if (selected != null) {
+                    selected.setParameter("green", sliderG.getValue());
+                }
+                break;
+
+            case SLIDER_B:
+                if (selected != null) {
+                    selected.setParameter("blue", sliderB.getValue());
                 }
                 break;
         }
@@ -184,12 +206,7 @@ public class Sketch extends PApplet {
         /*
          If selected is not null, then a scrubbable component is selected.
          */
-        if (selected != null) {
-            String[] properties = selected.getProperties();
-            selectedLabel.setValue(selected.getName());
-            propertyDropdown.clear();
-            propertyDropdown.addItems(properties);
-        }
+        updateForSelected(selected);
 
         /*
          Let the scrubber know that a mouse press occured at mouseX and mouseY
@@ -197,8 +214,13 @@ public class Sketch extends PApplet {
         s.mousePressed(mouseX, mouseY);
     }
 
-    @Override
-    public void keyPressed() {
+    private void updateForSelected(Scrubbable s) {
+        if (selected != null) {
+            String[] properties = selected.getProperties();
+            selectedLabel.setValue(selected.getName());
+            propertyDropdown.clear();
+            propertyDropdown.addItems(properties);
+        }
     }
 
     class Scrubber {
@@ -249,7 +271,6 @@ public class Sketch extends PApplet {
              Check if a scrubber channel is picked
              */
             for (ScrubberChannel sc : channels) {
-
                 ScrubberChannel pick = sc.pick(mx, my);
                 if (pick != null) {
                     /*
@@ -257,6 +278,7 @@ public class Sketch extends PApplet {
                      channel's target
                      */
                     selected = pick.target;
+                    updateForSelected(selected);
 
                     /*
                      Select the property in the dropdown
@@ -469,7 +491,7 @@ public class Sketch extends PApplet {
         public void draw() {
             pushStyle();
             pushMatrix();
-            stroke(255, 0, 0);
+            stroke(red, green, blue);
             translate(pos.x, pos.y);
             rotate(rot);
             strokeWeight(handWidth);
@@ -500,6 +522,7 @@ public class Sketch extends PApplet {
                     this.rot = value;
                     break;
                 case "red":
+                    System.out.println(value);
                     this.red = (int) value;
                     break;
                 case "green":
