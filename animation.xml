@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<scrubbers>
+    <scrubber>
+        <name>LeftFrontLeg</name>
+        <property>rotation</property>
+        <frames>
+            <frame>
+                <time>0</time>
+                <value>0.045692388</value>
+            </frame>
+            <frame>
+                <time>7796</time>
+                <value>-2.1895947</value>
+            </frame>
+        </frames>
+    </scrubber>
+</scrubbers>

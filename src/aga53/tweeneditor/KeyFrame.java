@@ -1,4 +1,4 @@
-package tweeneditor;
+package aga53.tweeneditor;
 
 /**
  *

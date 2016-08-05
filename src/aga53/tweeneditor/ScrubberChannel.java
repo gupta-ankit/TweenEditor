@@ -1,4 +1,4 @@
-package tweeneditor;
+package aga53.tweeneditor;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -158,5 +158,8 @@ public class ScrubberChannel extends PApplet {
 
     public String getProperty() {
         return property;
+    }
+    
+    public void write(){
     }
 }

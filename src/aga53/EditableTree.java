@@ -1,17 +1,18 @@
-package tweeneditor;
+package aga53;
+
+import processing.core.PApplet;
 
 /**
  *
  * @author aga53
  */
-public class Main {
+public class EditableTree {
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        
-        Sketch.main(Sketch.class.getCanonicalName());
+        PApplet.main("editabletree.Sketch");
     }
     
 }

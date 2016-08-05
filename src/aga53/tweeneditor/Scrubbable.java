@@ -1,4 +1,6 @@
-package tweeneditor;
+package aga53.tweeneditor;
+
+import processing.core.PGraphics;
 
 /**
  *
@@ -19,4 +21,6 @@ public interface Scrubbable {
     void draw();
 
     public Scrubbable pick(int mouseX, int mouseY);
+
+    public void updateGraphicsObject(PGraphics g);
 }
