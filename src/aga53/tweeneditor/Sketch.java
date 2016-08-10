@@ -10,9 +10,11 @@ import controlP5.Button;
 import controlP5.ControlEvent;
 import controlP5.ControlP5;
 import controlP5.DropdownList;
+import controlP5.Label;
 import controlP5.Slider;
 import controlP5.Textlabel;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import processing.core.PApplet;
@@ -39,6 +41,10 @@ public class Sketch extends PApplet {
     final int SAVE_BTN = 18;
     final int LOAD_BTN = 19;
 
+    final int ADD_KF = 20;
+
+    final int PAUSE_BTN = 21;
+
     Scrubber scrubber;
     ControlP5 gui;
     Scrubbable selected;
@@ -50,15 +56,24 @@ public class Sketch extends PApplet {
     Button addChannelButton;
     Slider rotationSlider, sliderR, sliderG, sliderB;
 
-    long playStartTime;
+    long lastUpdatedAt;
     boolean play;
     private Button saveBtn;
+
+    private Textlabel errorLabel;
+    private Textlabel timeLabel;
+    private boolean paused;
 
     @Override
     public void settings() {
         size(displayWidth, displayHeight);
     }
 
+    /**
+     * Creates a scrubbable animal
+     *
+     * @return
+     */
     public static Scrubbable getAnimal() {
         AnimalComponent creature = new Torso("Torso", 700, 300, 200.0f, 15.0f, PI / 2); // depth starts at 0
         BackLeg lbl = new BackLeg("LeftBackLeg", creature, 60);
@@ -75,7 +90,7 @@ public class Sketch extends PApplet {
         creature.addLeftChild(neck);
 
         Head head = new Head("Head", neck);
-        creature.addLeftChild(head);
+        neck.addLeftChild(head);
 
         return creature;
     }
@@ -83,14 +98,16 @@ public class Sketch extends PApplet {
     @Override
     public void setup() {
         play = false;
-        scrubbables = new ArrayList<>();
-        scrubber = new Scrubber(200, height / 2, width, height);
-        scrubber.g = this.g;
 
+        // initialize the GUI
         gui = new ControlP5(this);
-
-        playBtn = gui.addButton("Play").setId(PLAY_BTN).setPosition(20, 20);
-        gui.addButton("Stop").setId(STOP_BTN).setPosition(playBtn.getWidth() + 30, 20);
+        playBtn = gui.addButton("Play").setId(PLAY_BTN).setPosition(10, 20);
+        Button pauseBtn = gui.addButton("Pause")
+                .setId(PAUSE_BTN)
+                .setPosition(playBtn.getPosition()[0] + playBtn.getWidth() + 10, 20);
+        gui.addButton("Stop")
+                .setId(STOP_BTN)
+                .setPosition(pauseBtn.getPosition()[0] + pauseBtn.getWidth() + 10, 20);
 
         saveBtn = gui.addButton("Save").setId(SAVE_BTN).setPosition(playBtn.getPosition()[0],
                 playBtn.getPosition()[1] + playBtn.getHeight() + 30);
@@ -98,17 +115,21 @@ public class Sketch extends PApplet {
 
         PFont pfont = createFont("Arial", 20, true); // use true/false for smooth/no-smooth        
 
-        rotationSlider = setupSlider("rotation").setRange(-180, 180).setId(ROTATION_SLIDER);
+        // for every possible property in the animal create sliders
+        rotationSlider = setupSlider("rotation").setRange(-360, 360).setId(ROTATION_SLIDER);
         sliderR = setupSlider("red").setRange(0, 255).setId(SLIDER_R);
         sliderG = setupSlider("green").setRange(0, 255).setId(SLIDER_G);
         sliderB = setupSlider("blue").setRange(0, 255).setId(SLIDER_B);
 
+        //by default hide all the sliders
         rotationSlider.setVisible(false);
         sliderR.setVisible(false);
         sliderG.setVisible(false);
         sliderB.setVisible(false);
 
-        selectedLabel = gui.addLabel("selected").setPosition(50, rotationSlider.getPosition()[1] + rotationSlider.getHeight() + 20)
+        selectedLabel = gui.addLabel("selected")
+                .setPosition(50,
+                        rotationSlider.getPosition()[1] + rotationSlider.getHeight() + 20)
                 .setHeight(30)
                 .setColor(color(0))
                 .setFont(pfont);
@@ -122,35 +143,82 @@ public class Sketch extends PApplet {
                 .setPosition(propertyDropdown.getPosition()[0] + propertyDropdown.getWidth() + 5,
                         propertyDropdown.getPosition()[1]);
 
+        Button addKFBtn = gui.addButton("Add key frame")
+                .setId(ADD_KF)
+                .setPosition(saveBtn.getPosition()[0], propertyDropdown.getPosition()[1] + propertyDropdown.getHeight() + 5);
+
+        timeLabel = gui.addLabel("timeLabel")
+                .setPosition(addKFBtn.getPosition()[0], addKFBtn.getPosition()[1] + addKFBtn.getHeight() + 5)
+                .setColor(color(128)).setValue("");
+
+        errorLabel = gui.addLabel("")
+                .setColor(color(255, 0, 0))
+                .setFont(createFont("Georgia", 12))
+                .setPosition(timeLabel.getPosition()[0], timeLabel.getPosition()[1] + timeLabel.getHeight() + 5).setValue("");
+
+        // get animal and update its graphics
         AnimalComponent animal = (AnimalComponent) getAnimal();
         animal.updateGraphicsObject(this.g);
 
-        scrubbables.add(animal);
+        /*
+         create a list of every component in the animal. This list is required 
+         by the Scrubber to load animation
+         */
+        scrubbables = new ArrayList<>();
+        Iterator<AnimalComponent> it = animal.createIterator();
+        while (it.hasNext()) {
+            scrubbables.add(it.next());
+        }
+
+        // create a scrubber. The scrubber holds all the channels.
+        scrubber = new Scrubber(200, height / 2, width, height, scrubbables);
+        scrubber.g = this.g;
+
+        /*
+         uncomment the two lines below if you want to add some default channels 
+         and keyframes. Only use for debugging purpose.
+         */
+        //ScrubberChannel ch = scrubber.addChannel(animal, "rotation");
+        //ch.addkFrame(new KeyFrame(0, animal.getParameter("rotation")));
     }
 
+    /*
+     A helper function to create a sliders
+     */
     private Slider setupSlider(String name) {
         Slider slider = gui.addSlider(name);
-        slider.setColorCaptionLabel(color(0)).setPosition(saveBtn.getPosition()[0], saveBtn.getPosition()[1] + saveBtn.getHeight() + 30);
+        slider.setColorCaptionLabel(color(0)).setPosition(saveBtn.getPosition()[0], saveBtn.getPosition()[1] + saveBtn.getHeight() + 30).setWidth(175);
         return slider;
     }
 
+    /*
+     This methods is called when controlP5 events are triggered
+     */
     public void controlEvent(ControlEvent event) {
         switch (event.getId()) {
 
             case PLAY_BTN:
-                playStartTime = millis();
+                lastUpdatedAt = millis();
                 play = true;
+                paused = false;
                 break;
 
             case STOP_BTN:
                 play = false;
+                paused = false;
                 scrubber.setCurrentT(0);
+                scrubber.reset();
+                break;
+
+            case PAUSE_BTN:
+                play = false;
+                paused = true;
                 break;
 
             case SAVE_BTN:
                 scrubber.saveAnimation("animation.xml");
                 break;
-                
+
             case LOAD_BTN:
                 scrubber.loadAnimation("animation.xml");
                 break;
@@ -160,7 +228,10 @@ public class Sketch extends PApplet {
                     int selectedIndex = (int) propertyDropdown.getValue();
                     Map<String, Object> item = propertyDropdown.getItem(selectedIndex);
                     String stringValue = (String) item.get("name");
-                    scrubber.addChannel(selected, stringValue);
+                    ScrubberChannel channel = scrubber.addChannel(selected, stringValue);
+                    channel.addkFrame(new KeyFrame(0, selected.getParameter(stringValue)));
+                } else {
+                    println("Nothing selected");
                 }
                 break;
 
@@ -176,7 +247,7 @@ public class Sketch extends PApplet {
                 switch (stringValue) {
                     case "rotation":
                         rotationSlider.setVisible(true);
-                        rotationSlider.setValue(selected.getParameter("rotation"));
+                        rotationSlider.setValue(degrees(selected.getParameter("rotation")));
                         break;
                     case "red":
                         sliderR.setVisible(true);
@@ -191,7 +262,6 @@ public class Sketch extends PApplet {
                         sliderB.setValue(selected.getParameter("blue"));
                         break;
                 }
-
                 break;
 
             case ROTATION_SLIDER:
@@ -217,6 +287,28 @@ public class Sketch extends PApplet {
                     selected.setParameter("blue", sliderB.getValue());
                 }
                 break;
+
+            case ADD_KF:
+                int index = (int) propertyDropdown.getValue();
+                if (propertyDropdown.getItems().size() > 0) {
+                    final Map<String, Object> item1 = propertyDropdown.getItem(index);
+                    String prop = (String) item1.get("name");
+                    errorLabel.setValue("");
+                    if (selected != null && prop != null) {
+                        KeyFrame f = new KeyFrame(scrubber.getCurrentT(), selected.getParameter(prop));
+                        ScrubberChannel channel = scrubber.findChannel(selected, prop);
+                        if (channel != null) {
+                            channel.addkFrame(f);
+                        } else {
+                            errorLabel.setValue("Could not find a channel for \ncomponent:" + selected.getName() + " and property: " + prop);
+                        }
+                    } else {
+                        errorLabel.setValue("Please select a component and a property");
+                    }
+                } else {
+                    errorLabel.setValue("Please select a component and a property");
+                }
+                break;
         }
     }
 
@@ -224,15 +316,18 @@ public class Sketch extends PApplet {
     public void draw() {
         background(200);
 
+        timeLabel.setValue("time: " + scrubber.getCurrentT() + " ms");
+
+        noFill();
         //draw panel borders: menu, scrubber, and editable area
         rect(0, 0, 250, height / 2 - 5); // menu
         line(0, height / 2 - 5, width, height / 2 - 5);
-
-        long t = scrubber.getCurrentT();
         if (play) {
-            t = (millis() - playStartTime);
+            long t = scrubber.getCurrentT() + millis() - lastUpdatedAt;
+            lastUpdatedAt = millis();
+            scrubber.setCurrentT(t);
         }
-        scrubber.setCurrentT(t);
+        // the scrubber should be drawn when the animation is playing or not
         scrubber.draw();
 
         for (Scrubbable scrubbable : scrubbables) {
@@ -243,10 +338,10 @@ public class Sketch extends PApplet {
     @Override
     public void mousePressed() {
         /*
-        User click in the slider region
+         User click in the slider region
          */
         if (mouseX < 250 && mouseY < height / 2) {
-            println("menu");
+
         }
 
         if (mouseX > 250 && mouseY < height / 2) {
@@ -282,6 +377,8 @@ public class Sketch extends PApplet {
             selectedLabel.setValue(selected.getName());
             propertyDropdown.clear();
             propertyDropdown.addItems(properties);
+            propertyDropdown.open();
+            propertyDropdown.setValue(0);
         } else {
             selectedLabel.setValue("No Selection");
             propertyDropdown.clear();
@@ -297,9 +394,7 @@ public class Sketch extends PApplet {
                     index = i;
                 }
             }
-            println(index);
             propertyDropdown.setValue(index);
-//            propertyDropdown.close();
         } else {
 
         }

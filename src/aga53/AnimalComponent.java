@@ -10,6 +10,8 @@ import processing.core.PApplet;
 import processing.core.PGraphics;
 import processing.core.PVector;
 import aga53.tweeneditor.Scrubbable;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  *
@@ -40,7 +42,7 @@ public class AnimalComponent extends PApplet implements Scrubbable {
     AnimalComponent(String name, float initX, float initY,
             float initBranchLength,
             float initBranchWidth, float initRot) {
-        
+
         this.name = name;
 
         this.pos = new PVector(initX, initY);
@@ -188,7 +190,7 @@ public class AnimalComponent extends PApplet implements Scrubbable {
     public void setParameter(String property, float value) {
         switch (property) {
             case "rotation":
-                this.rot = value;
+                setRotation(value);
                 break;
             case "red":
                 this.c = color(value, green(this.c), blue(this.c));
@@ -218,6 +220,44 @@ public class AnimalComponent extends PApplet implements Scrubbable {
         this.g = g;
         for (int i = 0; i < right.size(); i++) {
             right.get(i).updateGraphicsObject(g);
+        }
+    }
+
+    public Iterator<AnimalComponent> createIterator() {
+        return new AnimalComponentIterator(this);
+    }
+
+    public class AnimalComponentIterator implements Iterator<AnimalComponent> {
+
+        private ArrayList<AnimalComponent> orderedList;
+        private final Iterator<AnimalComponent> orderedListIterator;
+
+        public AnimalComponentIterator(AnimalComponent root) {
+            orderedList = new ArrayList<>();
+            visit(orderedList, root);
+            orderedListIterator = orderedList.iterator();
+        }
+
+        private void visit(List<AnimalComponent> list, AnimalComponent root) {
+            for (int i = 0; i < root.left.size(); i++) {
+                visit(list, root.left.get(i));
+            }
+
+            list.add(root);
+
+            for (int i = 0; i < root.right.size(); i++) {
+                visit(list, root.right.get(i));
+            }
+        }
+
+        @Override
+        public boolean hasNext() {
+            return orderedListIterator.hasNext();
+        }
+
+        @Override
+        public AnimalComponent next() {
+            return orderedListIterator.next();
         }
     }
 }
