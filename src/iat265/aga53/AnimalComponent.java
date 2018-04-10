@@ -222,35 +222,20 @@ public class AnimalComponent implements Scrubbable {
 
     public class AnimalComponentIterator implements Iterator<Scrubbable> {
 
-        private final ArrayList<Scrubbable> orderedList;
-        private final Iterator<Scrubbable> orderedListIterator;
-
-        public AnimalComponentIterator(AnimalComponent root) {
-            orderedList = new ArrayList<>();
-            visit(orderedList, root);
-            orderedListIterator = orderedList.iterator();
-        }
-
-        private void visit(List<Scrubbable> list, AnimalComponent root) {
-            for (int i = 0; i < root.left.size(); i++) {
-                visit(list, root.left.get(i));
-            }
-
-            list.add(root);
-
-            for (int i = 0; i < root.right.size(); i++) {
-                visit(list, root.right.get(i));
-            }
+        private AnimalComponentIterator(AnimalComponent animal) {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
 
         @Override
         public boolean hasNext() {
-            return orderedListIterator.hasNext();
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
 
         @Override
         public Scrubbable next() {
-            return orderedListIterator.next();
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
+
+  
     }
 }
