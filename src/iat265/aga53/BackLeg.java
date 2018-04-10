@@ -3,7 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package aga53;
+package iat265.aga53;
+
+import processing.core.PApplet;
 
 /**
  *
@@ -13,25 +15,25 @@ public class BackLeg extends AnimalComponent {
 
     private final AnimalComponent parent;
 
-    public BackLeg(String name, AnimalComponent parent, float angle) {
-        super(name, parent.pos.x + parent.lengthVector.x, parent.pos.y + parent.lengthVector.y,
+    public BackLeg(PApplet p, String name, AnimalComponent parent, float angle) {
+        super(p, name, parent.pos.x + parent.lengthVector.x, parent.pos.y + parent.lengthVector.y,
                 .7f * parent.branchLength, .8f * parent.branchWidth,
-                parent.rot + radians(angle));
+                parent.rot + p.radians(angle));
         this.parent = parent;
     }
 
     @Override
     public void drawShape() {
-        pushStyle();
-        fill(c);
-        pushMatrix();
-        translate(pos.x, pos.y);
-        rotate(rot);
-        stroke(c);
-        strokeWeight(branchWidth);
-        line(0, 0, 0, -branchLength);
-        popMatrix();
-        popStyle();
+        p.pushStyle();
+        p.fill(c);
+        p.pushMatrix();
+        p.translate(pos.x, pos.y);
+        p.rotate(rot);
+        p.stroke(c);
+        p.strokeWeight(branchWidth);
+        p.line(0, 0, 0, -branchLength);
+        p.popMatrix();
+        p.popStyle();
     }
 
     @Override

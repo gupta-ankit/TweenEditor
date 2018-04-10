@@ -1,4 +1,4 @@
-package aga53;
+package iat265.aga53;
 
 import processing.core.PApplet;
 

@@ -1,5 +1,6 @@
-package aga53.tweeneditor;
+package iat265.aga53.tweeneditor;
 
+import iat265.aga53.Scrubbable;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;

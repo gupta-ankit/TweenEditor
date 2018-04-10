@@ -1,4 +1,4 @@
-package aga53.tweeneditor;
+package iat265.aga53.tweeneditor;
 
 /**
  *

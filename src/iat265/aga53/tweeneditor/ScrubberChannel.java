@@ -1,5 +1,6 @@
-package aga53.tweeneditor;
+package iat265.aga53.tweeneditor;
 
+import iat265.aga53.Scrubbable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;

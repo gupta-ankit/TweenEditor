@@ -1,24 +1,20 @@
-package aga53.tweeneditor;
+package iat265.aga53.tweeneditor;
 
-import aga53.AnimalComponent;
-import aga53.BackLeg;
-import aga53.FrontLeg;
-import aga53.Head;
-import aga53.Neck;
-import aga53.Torso;
 import controlP5.Button;
 import controlP5.ControlEvent;
 import controlP5.ControlP5;
 import controlP5.DropdownList;
-import controlP5.Label;
 import controlP5.Slider;
 import controlP5.Textlabel;
+import iat265.aga53.CreatureFactory;
+import iat265.aga53.Scrubbable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import org.reflections.Reflections;
 import processing.core.PApplet;
-import static processing.core.PConstants.PI;
 import processing.core.PFont;
 
 /**
@@ -67,32 +63,6 @@ public class Sketch extends PApplet {
     @Override
     public void settings() {
         size(displayWidth, displayHeight);
-    }
-
-    /**
-     * Creates a scrubbable animal
-     *
-     * @return
-     */
-    public static Scrubbable getAnimal() {
-        AnimalComponent creature = new Torso("Torso", 700, 300, 200.0f, 15.0f, PI / 2); // depth starts at 0
-        BackLeg lbl = new BackLeg("LeftBackLeg", creature, 60);
-        BackLeg rbl = new BackLeg("RightBackLeg", creature, 120);
-        FrontLeg lfl = new FrontLeg("LeftFrontLeg", creature, 60);
-        FrontLeg rfl = new FrontLeg("RightFrontLeg", creature, 120);
-
-        creature.addLeftChild(lbl);
-        creature.addRightChild(rbl);
-        creature.addLeftChild(lfl);
-        creature.addRightChild(rfl);
-
-        Neck neck = new Neck("Neck", creature, -135);
-        creature.addLeftChild(neck);
-
-        Head head = new Head("Head", neck);
-        neck.addLeftChild(head);
-
-        return creature;
     }
 
     @Override
@@ -157,15 +127,14 @@ public class Sketch extends PApplet {
                 .setPosition(timeLabel.getPosition()[0], timeLabel.getPosition()[1] + timeLabel.getHeight() + 5).setValue("");
 
         // get animal and update its graphics
-        AnimalComponent animal = (AnimalComponent) getAnimal();
-        animal.updateGraphicsObject(this.g);
+        Scrubbable animal = getAnimal();
 
         /*
          create a list of every component in the animal. This list is required 
          by the Scrubber to load animation
          */
         scrubbables = new ArrayList<>();
-        Iterator<AnimalComponent> it = animal.createIterator();
+        Iterator<Scrubbable> it = animal.createIterator();
         while (it.hasNext()) {
             scrubbables.add(it.next());
         }
@@ -314,7 +283,7 @@ public class Sketch extends PApplet {
 
     @Override
     public void draw() {
-        background(200);
+        background(255);
 
         timeLabel.setValue("time: " + scrubber.getCurrentT() + " ms");
 
@@ -337,25 +306,6 @@ public class Sketch extends PApplet {
 
     @Override
     public void mousePressed() {
-        /*
-         User click in the slider region
-         */
-        if (mouseX < 250 && mouseY < height / 2) {
-
-        }
-
-        if (mouseX > 250 && mouseY < height / 2) {
-            selected = null;
-            for (Scrubbable sb : scrubbables) {
-                Scrubbable pick = sb.pick(mouseX, mouseY);
-                if (pick != null) {
-                    selected = pick;
-                    break;
-                }
-            }
-            updateForSelected(selected);
-        }
-
         //clicking scrubber region
         if (mouseY > height / 2) {
             ScrubberChannel channel = scrubber.mousePressed(selected, mouseX, mouseY);
@@ -368,7 +318,23 @@ public class Sketch extends PApplet {
             }
             updateForSelected(selected);
             updatePropertyDropdown(selected, property);
+        } else {
+            //mouseY >= height/2
+            if (mouseX > 250) {
+                selected = null;
+                for (Scrubbable sb : scrubbables) {
+                    Scrubbable pick = sb.pick(mouseX, mouseY);
+                    if (pick != null) {
+                        selected = pick;
+                        break;
+                    }
+                }
+                updateForSelected(selected);
+            }else{
+                //clicking in the edit region
+            }
         }
+        
     }
 
     private void updateForSelected(Scrubbable s) {
@@ -398,5 +364,29 @@ public class Sketch extends PApplet {
         } else {
 
         }
+    }
+
+    private Scrubbable getAnimal() {
+        Reflections conf = new Reflections("iat265");
+        Set<Class<? extends CreatureFactory>> factories = conf.getSubTypesOf(CreatureFactory.class);
+        if (factories.size() != 1) {
+            System.err.println("You must have exactly one class which implements the CreatureFactory interface");
+            System.exit(-1);
+        }
+        Scrubbable creature = null;
+        try {
+            CreatureFactory factory = factories.iterator().next().newInstance();
+            creature = factory.getCreature(this);
+        } catch (InstantiationException ex) {
+            System.err.println("Please make sure that your factory class does not have a constructor with 1 or more arguments.");
+            System.exit(-1);
+        } catch (IllegalAccessException ex) {
+            System.err.println("Please make sure that the factory constructor (if you have one) is public.");
+            System.exit(-1);
+        }
+        if (creature == null) {
+            System.err.println("Your creature factory getCreature() method is returning a null value");
+        }
+        return creature;
     }
 }

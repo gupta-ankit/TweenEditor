@@ -3,13 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package aga53;
+package iat265.aga53;
 
 import java.util.ArrayList;
 import processing.core.PApplet;
 import processing.core.PGraphics;
 import processing.core.PVector;
-import aga53.tweeneditor.Scrubbable;
+import iat265.aga53.Scrubbable;
 import java.util.Iterator;
 import java.util.List;
 
@@ -17,7 +17,7 @@ import java.util.List;
  *
  * @author ankit
  */
-public class AnimalComponent extends PApplet implements Scrubbable {
+public class AnimalComponent implements Scrubbable {
 
     //the starting position
     PVector pos;
@@ -38,17 +38,20 @@ public class AnimalComponent extends PApplet implements Scrubbable {
 
     private BoundingBox bbox;
     private String name;
+    protected final PApplet p;
 
-    AnimalComponent(String name, float initX, float initY,
+    AnimalComponent(PApplet pa, String name, float initX, float initY,
             float initBranchLength,
             float initBranchWidth, float initRot) {
+        
+        this.p = pa;
 
         this.name = name;
 
         this.pos = new PVector(initX, initY);
         this.branchLength = initBranchLength;
         this.branchWidth = initBranchWidth;
-        this.c = color(128, 128, 128);
+        this.c = p.color(128, 128, 128);
 
         this.rot = initRot;
 
@@ -193,7 +196,7 @@ public class AnimalComponent extends PApplet implements Scrubbable {
                 setRotation(value);
                 break;
             case "red":
-                this.c = color(value, green(this.c), blue(this.c));
+                this.c = p.color(value, p.green(this.c), p.blue(this.c));
                 break;
             default:
                 throw new RuntimeException("Unknown property: " + property);
@@ -206,31 +209,21 @@ public class AnimalComponent extends PApplet implements Scrubbable {
             case "rotation":
                 return this.rot;
             case "red":
-                return red(this.c);
+                return p.red(this.c);
             default:
                 throw new RuntimeException("Unknown property: " + property);
         }
     }
 
     @Override
-    public void updateGraphicsObject(PGraphics g) {
-        for (int i = 0; i < left.size(); i++) {
-            left.get(i).updateGraphicsObject(g);
-        }
-        this.g = g;
-        for (int i = 0; i < right.size(); i++) {
-            right.get(i).updateGraphicsObject(g);
-        }
-    }
-
-    public Iterator<AnimalComponent> createIterator() {
+    public Iterator<Scrubbable> createIterator() {
         return new AnimalComponentIterator(this);
     }
 
-    public class AnimalComponentIterator implements Iterator<AnimalComponent> {
+    public class AnimalComponentIterator implements Iterator<Scrubbable> {
 
-        private ArrayList<AnimalComponent> orderedList;
-        private final Iterator<AnimalComponent> orderedListIterator;
+        private final ArrayList<Scrubbable> orderedList;
+        private final Iterator<Scrubbable> orderedListIterator;
 
         public AnimalComponentIterator(AnimalComponent root) {
             orderedList = new ArrayList<>();
@@ -238,7 +231,7 @@ public class AnimalComponent extends PApplet implements Scrubbable {
             orderedListIterator = orderedList.iterator();
         }
 
-        private void visit(List<AnimalComponent> list, AnimalComponent root) {
+        private void visit(List<Scrubbable> list, AnimalComponent root) {
             for (int i = 0; i < root.left.size(); i++) {
                 visit(list, root.left.get(i));
             }
@@ -256,7 +249,7 @@ public class AnimalComponent extends PApplet implements Scrubbable {
         }
 
         @Override
-        public AnimalComponent next() {
+        public Scrubbable next() {
             return orderedListIterator.next();
         }
     }
