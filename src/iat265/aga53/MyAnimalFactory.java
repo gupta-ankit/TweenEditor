@@ -12,10 +12,10 @@ import static processing.core.PConstants.PI;
  *
  * @author aga53
  */
-public class MyAnimalFactory implements CreatureFactory {
+public class MyAnimalFactory implements MechanismFactory {
 
     @Override
-    public Scrubbable getCreature(PApplet pa) {
+    public Scrubbable getMechanism(PApplet pa) {
         AnimalComponent creature = new Torso(pa, "Torso", 700, 300, 200.0f, 15.0f, PI / 2); // depth starts at 0
         BackLeg lbl = new BackLeg(pa,"LeftBackLeg", creature, 60);
         BackLeg rbl = new BackLeg(pa,"RightBackLeg", creature, 120);

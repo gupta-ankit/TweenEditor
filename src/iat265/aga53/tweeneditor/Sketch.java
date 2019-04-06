@@ -6,7 +6,7 @@ import controlP5.ControlP5;
 import controlP5.DropdownList;
 import controlP5.Slider;
 import controlP5.Textlabel;
-import iat265.aga53.CreatureFactory;
+import iat265.aga53.MechanismFactory;
 import iat265.aga53.Scrubbable;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -368,15 +368,15 @@ public class Sketch extends PApplet {
 
     private Scrubbable getAnimal() {
         Reflections conf = new Reflections("iat265");
-        Set<Class<? extends CreatureFactory>> factories = conf.getSubTypesOf(CreatureFactory.class);
+        Set<Class<? extends MechanismFactory>> factories = conf.getSubTypesOf(MechanismFactory.class);
         if (factories.size() != 1) {
             System.err.println("You must have exactly one class which implements the CreatureFactory interface");
             System.exit(-1);
         }
         Scrubbable creature = null;
         try {
-            CreatureFactory factory = factories.iterator().next().newInstance();
-            creature = factory.getCreature(this);
+            MechanismFactory factory = factories.iterator().next().newInstance();
+            creature = factory.getMechanism(this);
         } catch (InstantiationException ex) {
             System.err.println("Please make sure that your factory class does not have a constructor with 1 or more arguments.");
             System.exit(-1);
